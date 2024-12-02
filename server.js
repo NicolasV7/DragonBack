@@ -160,31 +160,37 @@ app.post('/user-stats/increment-captured', async (req, res) => {
   try {
     let stats = await UserStats.findOne({ where: { userId } });
     if (!stats) {
+      // Crea el registro si no existe
       stats = await UserStats.create({ userId, capturedCount: 1, exchangedCount: 0 });
     } else {
+      // Incrementa el contador de capturas
       await stats.increment('capturedCount');
     }
     res.status(200).json(stats);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error en /user-stats/increment-captured:', error);
+    res.status(400).json({ error: 'Error incrementando el contador de capturas: ' + error.message });
   }
 });
 
-// Ruta para incrementar el contador de personajes intercambiados
 app.post('/user-stats/increment-exchanged', async (req, res) => {
   const { userId } = req.body;
   try {
     let stats = await UserStats.findOne({ where: { userId } });
     if (!stats) {
+      // Crea el registro si no existe
       stats = await UserStats.create({ userId, capturedCount: 0, exchangedCount: 1 });
     } else {
+      // Incrementa el contador de intercambios
       await stats.increment('exchangedCount');
     }
     res.status(200).json(stats);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error en /user-stats/increment-exchanged:', error);
+    res.status(400).json({ error: 'Error incrementando el contador de intercambios: ' + error.message });
   }
 });
+
 
 // Ruta para obtener las estadísticas de todos los usuarios
 app.get('/user-stats', async (req, res) => {
