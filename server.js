@@ -107,12 +107,14 @@ app.post('/villains', async (req, res) => {
     }
     let villain = await Villain.findOne({ where: { characterId: characterId.toString() } });
     if (villain) {
+      const previousUser = await User.findOne({ where: { id: villain.userId } });
       villain.userId = user.id;
       await villain.save();
+      res.status(200).json({ villain, previousUser });
     } else {
       villain = await Villain.create({ userId: user.id, characterId: characterId.toString() });
+      res.status(201).json(villain);
     }
-    res.status(201).json(villain);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
