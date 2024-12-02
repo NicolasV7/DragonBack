@@ -195,17 +195,20 @@ app.post('/user-stats/increment-exchanged', async (req, res) => {
 // Ruta para obtener las estadísticas de todos los usuarios
 app.get('/user-stats', async (req, res) => {
   try {
-    const stats = await UserStats.findAll({
-      include: [{
-        model: User,
-        attributes: ['username', 'email']
-      }]
-    });
-    res.status(200).json(stats);
+    const stats = await UserStats.findAll();
+    const detailedStats = await Promise.all(stats.map(async (stat) => {
+      const user = await User.findByPk(stat.userId);
+      return {
+        ...stat.toJSON(),
+        User: user ? { username: user.username, email: user.email } : null
+      };
+    }));
+    res.status(200).json(detailedStats);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
+
 
 // Iniciar el servidor
 const PORT = process.env.PORT || 3000;
