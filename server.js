@@ -11,8 +11,8 @@ app.use(bodyParser.json());
 //CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
 }
 );
@@ -105,7 +105,13 @@ app.post('/villains', async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    const villain = await Villain.create({ userId: user.id, characterId: characterId.toString() });
+    let villain = await Villain.findOne({ where: { characterId: characterId.toString() } });
+    if (villain) {
+      villain.userId = user.id;
+      await villain.save();
+    } else {
+      villain = await Villain.create({ userId: user.id, characterId: characterId.toString() });
+    }
     res.status(201).json(villain);
   } catch (error) {
     res.status(400).json({ error: error.message });
