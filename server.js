@@ -169,6 +169,28 @@ app.get('/user-stats', async (req, res) => {
   }
 });
 
+// Ruta para incrementar el contador de personajes capturados
+app.post('/user-stats/increment-captured', async (req, res) => {
+  const { userId } = req.body;
+  try {
+    await UserStats.increment('capturedCount', { where: { userId } });
+    res.status(200).json({ message: 'Captured count incremented' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Ruta para incrementar el contador de personajes intercambiados
+app.post('/user-stats/increment-exchanged', async (req, res) => {
+  const { userId } = req.body;
+  try {
+    await UserStats.increment('exchangedCount', { where: { userId } });
+    res.status(200).json({ message: 'Exchanged count incremented' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Iniciar el servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
