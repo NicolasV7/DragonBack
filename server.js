@@ -12,8 +12,8 @@ app.use(bodyParser.json());
 //CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
 }
 );
@@ -148,6 +148,21 @@ app.get('/user-stats/:email', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     const stats = await UserStats.findOne({ where: { userId: user.id } });
+    res.status(200).json(stats);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Ruta para obtener las estadísticas de todos los usuarios
+app.get('/user-stats', async (req, res) => {
+  try {
+    const stats = await UserStats.findAll({
+      include: [{
+        model: User,
+        attributes: ['username', 'email']
+      }]
+    });
     res.status(200).json(stats);
   } catch (error) {
     res.status(400).json({ error: error.message });
