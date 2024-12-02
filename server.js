@@ -4,6 +4,7 @@ const sequelize = require('./config/database');
 const User = require('./models/User');
 const Favorite = require('./models/Favorite');
 const Villain = require('./models/Villain');
+const UserStats = require('./models/UserStats');
 
 const app = express();
 app.use(bodyParser.json());
@@ -11,8 +12,8 @@ app.use(bodyParser.json());
 //CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   next();
 }
 );
@@ -27,6 +28,7 @@ app.post('/signup', async (req, res) => {
   const { username, email, password } = req.body;
   try {
     const user = await User.create({ username, email, password });
+    await UserStats.create({ userId: user.id });
     res.status(201).json(user);
   } catch (error) {
     if (error.name === 'SequelizeUniqueConstraintError') {
@@ -110,9 +112,11 @@ app.post('/villains', async (req, res) => {
       const previousUser = await User.findOne({ where: { id: villain.userId } });
       villain.userId = user.id;
       await villain.save();
+      await UserStats.increment('exchangedCount', { where: { userId: user.id } });
       res.status(200).json({ villain, previousUser });
     } else {
       villain = await Villain.create({ userId: user.id, characterId: characterId.toString() });
+      await UserStats.increment('capturedCount', { where: { userId: user.id } });
       res.status(201).json(villain);
     }
   } catch (error) {
@@ -130,6 +134,21 @@ app.get('/villains/:email', async (req, res) => {
     }
     const villains = await Villain.findAll({ where: { userId: user.id } });
     res.status(200).json(villains);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Ruta para obtener las estadísticas del usuario
+app.get('/user-stats/:email', async (req, res) => {
+  const { email } = req.params;
+  try {
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const stats = await UserStats.findOne({ where: { userId: user.id } });
+    res.status(200).json(stats);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
